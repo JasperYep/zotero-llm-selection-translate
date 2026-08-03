@@ -1,84 +1,78 @@
-# LLM Selection Translate for Zotero
+<p align="center">
+  <img src="icon.svg" width="72" alt="LLM Selection Translate icon">
+</p>
 
-A lightweight Zotero Reader plugin for translating selected academic text through an OpenAI-compatible Chat Completions API.
+<h1 align="center">LLM Selection Translate</h1>
+
+<p align="center">A quiet translation layer for the Zotero Reader.</p>
+
+<p align="center">
+  <a href="https://github.com/JasperYep/zotero-llm-selection-translate/releases/latest">Download XPI</a>
+  ·
+  <a href="https://github.com/JasperYep/zotero-llm-selection-translate/issues">Issues</a>
+</p>
 
 ## Features
 
-- Translate selected text in the Zotero PDF/EPUB Reader.
-- Plain-text `Summary` mode for explaining difficult academic text in simple language.
-- Persistent local cache for successful translations and summaries.
-- Separate cache entries for translation and summary results.
-- Streaming responses.
-- Configurable endpoint, model, target language, prompts, and additional request JSON.
-- Minimal icon-based popup UI.
-- Press `P` in the Zotero Reader to toggle the native Highlight tool on and off.
+- Translate selected academic text through an OpenAI-compatible API.
+- Explain difficult passages with a plain-text Summary mode.
+- Cache successful translations and summaries locally.
+- Stream responses when supported by the endpoint.
+- Press `P` to toggle Zotero's native Highlight tool.
 
-## Installation
+## Install
 
-1. Build or download `dist/llm-selection-translate-for-zotero.xpi`.
-2. In Zotero, open **Tools → Add-ons**.
-3. Open the gear menu and choose **Install Add-on From File…**.
-4. Select the XPI file and restart Zotero completely.
-5. Confirm that the installed version matches the version in `manifest.json`.
+1. Download `llm-selection-translate-for-zotero.xpi` from [Releases](https://github.com/JasperYep/zotero-llm-selection-translate/releases/latest).
+2. Open **Zotero → Tools → Add-ons**.
+3. Choose **Install Add-on From File…** from the gear menu.
+4. Select the XPI and restart Zotero.
 
-## Build
+## Configure
 
-Requirements: macOS/Linux, Bash, and the `zip` command.
+Open **Zotero Preferences → LLM Selection Translate** and set:
 
-```bash
-./build.sh
-```
+- API endpoint
+- API token
+- Model
+- Target language
+- Translation and Summary prompts
 
-The generated package is written to:
+The Summary output is normalized to plain text because the popup does not render Markdown.
 
-```text
-dist/llm-selection-translate-for-zotero.xpi
-```
+## Shortcut
 
-The XPI contains only the runtime files:
+| Key | Action |
+| --- | --- |
+| `P` | `pointer` ↔ `highlight` |
 
-- `bootstrap.js`
-- `manifest.json`
-- `prefs.js`
-- `chrome/content/preferences.xhtml`
-- `chrome/content/scripts/llmselectiontranslate.js`
+When Highlight is active, selected text is annotated with Zotero's current highlight color. Press `P` again to return to text selection and translation.
 
-## Configuration
+The shortcut is ignored while typing in an editable field.
 
-Open Zotero Preferences and select **LLM Selection Translate**.
+## Cache
 
-The plugin supports an OpenAI-compatible Chat Completions endpoint. API tokens are stored in Zotero preferences and are not committed to this repository.
-
-The summary prompt is required to produce plain text because the popup uses a text-oriented display. Markdown-like output is also cleaned before display.
-
-## Keyboard shortcut
-
-In the Zotero Reader, press `P` without modifiers to toggle the native Highlight tool:
-
-```text
-pointer ↔ highlight
-```
-
-When Highlight is enabled, selecting text creates a highlight with Zotero's current/default highlight color and does not open the translation popup. Press `P` again to return to the pointer, after which selecting text opens the translation popup normally.
-
-The shortcut is ignored while typing in an input, textarea, select, or editable field. It applies to the Reader's outer window and PDF/EPUB subviews.
-
-## Local cache
-
-Successful results are persisted in the Zotero profile as:
+Successful results are stored in the Zotero profile as:
 
 ```text
 llm-selection-translate-cache.json
 ```
 
-Cache keys include the mode, endpoint, model, target language, prompt template, and selected text. Translation and summary results therefore do not collide. Failed or empty responses are not valid cache entries.
+Cache keys include the mode, endpoint, model, target language, prompt template, and selected text. Failed or empty responses are not cached.
 
-## Development notes
+## Build
 
-The current runtime script is a bundled JavaScript file. The repository does not currently include the original TypeScript/source-module project used to generate it.
+```bash
+./build.sh
+```
 
-Zotero loads bootstrap extensions at startup. After replacing an installed XPI, fully quit Zotero with `Cmd+Q` and reinstall the XPI from **Add-ons → Install Add-on From File…** rather than relying on a hot reload.
+Output:
 
-## Repository
+```text
+dist/llm-selection-translate-for-zotero.xpi
+```
 
-GitHub: <https://github.com/JasperYep/zotero-llm-selection-translate>
+The runtime is currently shipped as a bundled JavaScript file. API tokens and local cache files are not part of this repository.
+
+## License
+
+No license has been assigned yet.
