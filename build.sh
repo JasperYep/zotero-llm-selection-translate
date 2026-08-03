@@ -8,6 +8,9 @@ stage_dir="$(mktemp -d)"
 trap 'rm -rf "$stage_dir"' EXIT
 
 mkdir -p "$out_dir"
+if command -v xmllint >/dev/null 2>&1; then
+  xmllint --noout "$repo_dir/chrome/content/preferences.xhtml"
+fi
 cp "$repo_dir/bootstrap.js" "$repo_dir/manifest.json" "$repo_dir/prefs.js" "$stage_dir/"
 mkdir -p "$stage_dir/chrome/content/scripts"
 cp "$repo_dir/chrome/content/preferences.xhtml" "$stage_dir/chrome/content/"
