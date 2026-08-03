@@ -4192,10 +4192,15 @@ ${buffer}`.trim();
         return;
       }
       const after = internalReader._state?.tool?.type || (before === "highlight" ? "pointer" : "highlight");
-      Zotero.debug(`LLMSelectionTranslate: P toggled tool ${before} -> ${after}`);
+      Zotero.debug(`LLMSelectionTranslate: ${getHighlightShortcutKey().toUpperCase()} toggled tool ${before} -> ${after}`);
     } catch (error) {
       Zotero.debug(`LLMSelectionTranslate: failed to toggle highlight tool: ${error}`);
     }
+  }
+
+  function getHighlightShortcutKey() {
+    const configuredKey = String(getPref("highlightShortcutKey") || "a").trim().toLowerCase();
+    return /^[a-z]$/.test(configuredKey) ? configuredKey : "a";
   }
 
   function attachAnnotationShortcut(reader) {
@@ -4214,7 +4219,7 @@ ${buffer}`.trim();
           if (
             event.defaultPrevented ||
             event.repeat ||
-            event.key?.toLowerCase() !== "p" ||
+            event.key?.toLowerCase() !== getHighlightShortcutKey() ||
             event.metaKey ||
             event.ctrlKey ||
             event.altKey ||

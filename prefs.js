@@ -1,6 +1,7 @@
 pref("extensions.zotero.LLMSelectionTranslate.enableAuto", true);
 pref("extensions.zotero.LLMSelectionTranslate.stream", true);
 pref("extensions.zotero.LLMSelectionTranslate.enableCache", true);
+pref("extensions.zotero.LLMSelectionTranslate.highlightShortcutKey", "a");
 pref("extensions.zotero.LLMSelectionTranslate.maxCacheEntries", 2000);
 pref("extensions.zotero.LLMSelectionTranslate.endpoint", "https://api.example.com/v1");
 pref("extensions.zotero.LLMSelectionTranslate.apiToken", "");

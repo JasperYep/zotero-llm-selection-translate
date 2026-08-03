@@ -18,7 +18,7 @@
 - Explain difficult passages with a plain-text Summary mode.
 - Cache successful translations and summaries locally.
 - Stream responses when supported by the endpoint.
-- Press `P` to toggle Zotero's native Highlight tool.
+- Press the configurable shortcut (default `A`) to toggle Zotero's native Highlight tool.
 
 ## Install
 
@@ -35,6 +35,7 @@ Open **Zotero Preferences → LLM Selection Translate** and set:
 - API token
 - Model
 - Target language
+- Highlight shortcut key (one letter; default `A`)
 - Translation and Summary prompts
 
 The Summary output is normalized to plain text because the popup does not render Markdown.
@@ -43,9 +44,9 @@ The Summary output is normalized to plain text because the popup does not render
 
 | Key | Action |
 | --- | --- |
-| `P` | `pointer` ↔ `highlight` |
+| `A` by default | `pointer` ↔ `highlight` |
 
-When Highlight is active, selected text is annotated with Zotero's current highlight color. Press `P` again to return to text selection and translation.
+When Highlight is active, selected text is annotated with Zotero's current highlight color. Press the configured key again to return to text selection and translation.
 
 The shortcut is ignored while typing in an editable field.
 
