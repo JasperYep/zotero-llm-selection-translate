@@ -11,6 +11,7 @@ A lightweight Zotero Reader plugin for translating selected academic text throug
 - Streaming responses.
 - Configurable endpoint, model, target language, prompts, and additional request JSON.
 - Minimal icon-based popup UI.
+- Press `P` in the Zotero Reader to toggle the text annotation mode between highlight and underline.
 
 ## Installation
 
@@ -49,6 +50,16 @@ Open Zotero Preferences and select **LLM Selection Translate**.
 The plugin supports an OpenAI-compatible Chat Completions endpoint. API tokens are stored in Zotero preferences and are not committed to this repository.
 
 The summary prompt is required to produce plain text because the popup uses a text-oriented display. Markdown-like output is also cleaned before display.
+
+## Keyboard shortcut
+
+In the Zotero Reader, press `P` without modifiers to toggle the persistent text annotation mode:
+
+```text
+highlight ↔ underline
+```
+
+The shortcut is ignored while typing in an input, textarea, select, or editable field. It applies to the Reader's outer window and PDF/EPUB subviews.
 
 ## Local cache
 

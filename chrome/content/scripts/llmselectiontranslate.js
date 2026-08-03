@@ -4148,7 +4148,95 @@ ${buffer}`.trim();
     }
   }
 
-  // src/modules/reader.ts
+  // src/modules/reader-shortcut.ts
+  function isEditableTarget(target) {
+    if (!target) {
+      return false;
+    }
+    const element = target.nodeType === 1 ? target : target.parentElement;
+    if (!element) {
+      return false;
+    }
+    return element.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(element.nodeName);
+  }
+
+  function getReaderWindows(reader) {
+    const windows = [reader?._iframeWindow];
+    const internalReader = reader?._internalReader;
+    const views = [
+      internalReader?._primaryView,
+      internalReader?._secondaryView,
+      internalReader?._lastView
+    ];
+    for (const view of views) {
+      windows.push(view?._iframeWindow);
+    }
+    return [...new Set(windows.filter(Boolean))];
+  }
+
+  function toggleTextAnnotationMode(reader) {
+    const currentMode = String(Zotero.Prefs.get("reader.textSelectionAnnotationMode") || "highlight");
+    const nextMode = currentMode === "highlight" ? "underline" : "highlight";
+    try {
+      if (reader?._internalReader?.setTextSelectionAnnotationMode) {
+        reader._internalReader.setTextSelectionAnnotationMode(nextMode);
+      } else {
+        Zotero.Prefs.set("reader.textSelectionAnnotationMode", nextMode);
+      }
+      Zotero.debug(`LLMSelectionTranslate: P toggled annotation mode ${currentMode} -> ${nextMode}`);
+    } catch (error) {
+      Zotero.debug(`LLMSelectionTranslate: failed to toggle annotation mode: ${error}`);
+    }
+  }
+
+  function attachAnnotationShortcut(reader) {
+    if (!reader) {
+      return;
+    }
+    const attach = () => {
+      for (const win of getReaderWindows(reader)) {
+        const alreadyAttached = addon.data.annotationShortcutListeners.some(
+          (listener) => listener.window === win && listener.reader === reader
+        );
+        if (alreadyAttached) {
+          continue;
+        }
+        const handler = (event) => {
+          if (
+            event.defaultPrevented ||
+            event.repeat ||
+            event.key?.toLowerCase() !== "p" ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.altKey ||
+            event.shiftKey ||
+            isEditableTarget(event.target)
+          ) {
+            return;
+          }
+          event.preventDefault();
+          event.stopPropagation();
+          toggleTextAnnotationMode(reader);
+        };
+        win.addEventListener("keydown", handler, true);
+        addon.data.annotationShortcutListeners.push({ window: win, reader, handler });
+      }
+    };
+
+    attach();
+    // PDF/EPUB subviews can be created after the outer reader window.
+    const retry = (remaining) => {
+      if (!addon.data.alive || remaining <= 0) {
+        return;
+      }
+      attach();
+      if (getReaderWindows(reader).length < 2) {
+        setTimeout(() => retry(remaining - 1), 500);
+      }
+    };
+    retry(10);
+  }
+
   function registerReaderInitializer() {
     Zotero.Reader.registerEventListener(
       "renderTextSelectionPopup",
@@ -4161,6 +4249,16 @@ ${buffer}`.trim();
       },
       config.addonID
     );
+    Zotero.Reader.registerEventListener(
+      "renderToolbar",
+      (event) => {
+        attachAnnotationShortcut(event.reader);
+      },
+      config.addonID
+    );
+    for (const reader of Zotero.Reader._readers || []) {
+      attachAnnotationShortcut(reader);
+    }
   }
 
   // src/hooks.ts
@@ -4180,6 +4278,10 @@ ${buffer}`.trim();
   }
   function onShutdown() {
     addon.data.alive = false;
+    for (const { window, handler } of addon.data.annotationShortcutListeners) {
+      window.removeEventListener("keydown", handler, true);
+    }
+    addon.data.annotationShortcutListeners = [];
     addon.data.popup.currentKey = null;
     addon.data.popup.currentElements = null;
     addon.data.translations.clear();
@@ -4205,7 +4307,8 @@ ${buffer}`.trim();
           currentKey: null,
           currentElements: null
         },
-        translations: /* @__PURE__ */ new Map()
+        translations: /* @__PURE__ */ new Map(),
+        annotationShortcutListeners: []
       };
       this.hooks = hooks_default;
     }
