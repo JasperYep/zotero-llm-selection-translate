@@ -11,7 +11,7 @@ A lightweight Zotero Reader plugin for translating selected academic text throug
 - Streaming responses.
 - Configurable endpoint, model, target language, prompts, and additional request JSON.
 - Minimal icon-based popup UI.
-- Press `P` in the Zotero Reader to toggle the text annotation mode between highlight and underline.
+- Press `P` in the Zotero Reader to toggle the native Highlight tool on and off.
 
 ## Installation
 
@@ -53,11 +53,13 @@ The summary prompt is required to produce plain text because the popup uses a te
 
 ## Keyboard shortcut
 
-In the Zotero Reader, press `P` without modifiers to toggle the persistent text annotation mode:
+In the Zotero Reader, press `P` without modifiers to toggle the native Highlight tool:
 
 ```text
-highlight ↔ underline
+pointer ↔ highlight
 ```
+
+When Highlight is enabled, selecting text creates a highlight with Zotero's current/default highlight color and does not open the translation popup. Press `P` again to return to the pointer, after which selecting text opens the translation popup normally.
 
 The shortcut is ignored while typing in an input, textarea, select, or editable field. It applies to the Reader's outer window and PDF/EPUB subviews.
 

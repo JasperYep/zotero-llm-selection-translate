@@ -4174,18 +4174,27 @@ ${buffer}`.trim();
     return [...new Set(windows.filter(Boolean))];
   }
 
-  function toggleTextAnnotationMode(reader) {
-    const currentMode = String(Zotero.Prefs.get("reader.textSelectionAnnotationMode") || "highlight");
-    const nextMode = currentMode === "highlight" ? "underline" : "highlight";
+  function toggleHighlightTool(reader) {
+    const internalReader = reader?._internalReader;
+    if (!internalReader) {
+      return;
+    }
     try {
-      if (reader?._internalReader?.setTextSelectionAnnotationMode) {
-        reader._internalReader.setTextSelectionAnnotationMode(nextMode);
+      const before = internalReader._state?.tool?.type || "unknown";
+      if (typeof internalReader.toggleTool === "function") {
+        // Zotero's native toggleTool uses the existing highlight tool/color.
+        internalReader.toggleTool("highlight");
+      } else if (typeof internalReader.setTool === "function") {
+        internalReader.setTool({
+          type: before === "highlight" ? "pointer" : "highlight"
+        });
       } else {
-        Zotero.Prefs.set("reader.textSelectionAnnotationMode", nextMode);
+        return;
       }
-      Zotero.debug(`LLMSelectionTranslate: P toggled annotation mode ${currentMode} -> ${nextMode}`);
+      const after = internalReader._state?.tool?.type || (before === "highlight" ? "pointer" : "highlight");
+      Zotero.debug(`LLMSelectionTranslate: P toggled tool ${before} -> ${after}`);
     } catch (error) {
-      Zotero.debug(`LLMSelectionTranslate: failed to toggle annotation mode: ${error}`);
+      Zotero.debug(`LLMSelectionTranslate: failed to toggle highlight tool: ${error}`);
     }
   }
 
@@ -4216,7 +4225,7 @@ ${buffer}`.trim();
           }
           event.preventDefault();
           event.stopPropagation();
-          toggleTextAnnotationMode(reader);
+          toggleHighlightTool(reader);
         };
         win.addEventListener("keydown", handler, true);
         addon.data.annotationShortcutListeners.push({ window: win, reader, handler });
