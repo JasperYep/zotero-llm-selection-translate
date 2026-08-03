@@ -1,0 +1,105 @@
+<vbox id="zotero-prefpane-llmselectiontranslate" flex="1">
+  <groupbox>
+    <label value="Behavior & Cache" />
+    <checkbox
+      id="llmselectiontranslate-enableAuto"
+      label="Automatically translate selected text"
+      native="true"
+      preference="extensions.zotero.LLMSelectionTranslate.enableAuto"
+    />
+    <checkbox
+      id="llmselectiontranslate-stream"
+      label="Use streaming response"
+      native="true"
+      preference="extensions.zotero.LLMSelectionTranslate.stream"
+    />
+    <checkbox
+      id="llmselectiontranslate-enableCache"
+      label="Enable local token cache database (Save API calls &amp; instant hit)"
+      native="true"
+      preference="extensions.zotero.LLMSelectionTranslate.enableCache"
+    />
+    <hbox align="center">
+      <label value="Target Language" />
+      <html:input
+        id="llmselectiontranslate-targetLanguage"
+        type="text"
+        preference="extensions.zotero.LLMSelectionTranslate.targetLanguage"
+        style="width: 320px"
+      />
+    </hbox>
+  </groupbox>
+
+  <groupbox>
+    <label value="LLM API" />
+    <description>
+      Uses an OpenAI-compatible Chat Completions endpoint.
+    </description>
+    <hbox align="center">
+      <label value="API Endpoint" />
+      <html:input
+        id="llmselectiontranslate-endpoint"
+        type="text"
+        preference="extensions.zotero.LLMSelectionTranslate.endpoint"
+        style="width: 520px"
+      />
+    </hbox>
+    <hbox align="center">
+      <label value="Token" />
+      <html:input
+        id="llmselectiontranslate-apiToken"
+        type="password"
+        preference="extensions.zotero.LLMSelectionTranslate.apiToken"
+        style="width: 520px"
+      />
+    </hbox>
+    <hbox align="center">
+      <label value="Model" />
+      <html:input
+        id="llmselectiontranslate-model"
+        type="text"
+        preference="extensions.zotero.LLMSelectionTranslate.model"
+        style="width: 320px"
+      />
+    </hbox>
+  </groupbox>
+
+  <groupbox>
+    <label value="Translation Prompt Template" />
+    <description>
+      Supports placeholders: {{text}}, {{targetLanguage}}
+    </description>
+    <html:textarea
+      id="llmselectiontranslate-promptTemplate"
+      preference="extensions.zotero.LLMSelectionTranslate.promptTemplate"
+      rows="6"
+      style="width: 720px; min-height: 140px"
+    />
+  </groupbox>
+
+  <groupbox>
+    <label value="Summary Prompt Template (人话总结)" />
+    <description>
+      Supports placeholders: {{text}}, {{targetLanguage}}
+    </description>
+    <html:textarea
+      id="llmselectiontranslate-summaryPromptTemplate"
+      preference="extensions.zotero.LLMSelectionTranslate.summaryPromptTemplate"
+      rows="6"
+      style="width: 720px; min-height: 140px"
+    />
+  </groupbox>
+
+  <groupbox>
+    <label value="Additional Request JSON" />
+    <description>
+      Merged into the request body. Example for BigModel: {"thinking":{"type":"disabled"}}
+    </description>
+    <html:textarea
+      id="llmselectiontranslate-extraBodyJson"
+      preference="extensions.zotero.LLMSelectionTranslate.extraBodyJson"
+      rows="5"
+      style="width: 720px; min-height: 100px"
+    />
+  </groupbox>
+</vbox>

@@ -1,0 +1,11 @@
+pref("extensions.zotero.LLMSelectionTranslate.enableAuto", true);
+pref("extensions.zotero.LLMSelectionTranslate.stream", true);
+pref("extensions.zotero.LLMSelectionTranslate.enableCache", true);
+pref("extensions.zotero.LLMSelectionTranslate.maxCacheEntries", 2000);
+pref("extensions.zotero.LLMSelectionTranslate.endpoint", "https://api.example.com/v1");
+pref("extensions.zotero.LLMSelectionTranslate.apiToken", "");
+pref("extensions.zotero.LLMSelectionTranslate.model", "deepseek-r1:671b-0528");
+pref("extensions.zotero.LLMSelectionTranslate.targetLanguage", "中文");
+pref("extensions.zotero.LLMSelectionTranslate.extraBodyJson", "");
+pref("extensions.zotero.LLMSelectionTranslate.promptTemplate", "请把下面选中的学术文本翻译成{{targetLanguage}}。只输出译文，不要添加解释、标题、引号或额外说明。\n\n{{text}}");
+pref("extensions.zotero.LLMSelectionTranslate.summaryPromptTemplate", "请用通俗易懂的“人话”总结并解释以下这句/这段学术文本。请使用纯文本格式输出，严禁使用任何 Markdown 语法标记（不要使用 **、#、-、*、--- 等符号），使用清晰的换行、数字序号（1. 2. 3.）与通俗直观的比喻呈现核心含义：\n\n{{text}}");
