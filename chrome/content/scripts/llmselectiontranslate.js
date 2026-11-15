@@ -3435,6 +3435,25 @@ html {
     return svg;
   }
 
+  function createBoltIcon(doc) {
+    const svg = doc.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", "14");
+    svg.setAttribute("height", "14");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "1.8");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    svg.style.display = "block";
+
+    const path = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5z");
+
+    svg.append(path);
+    return svg;
+  }
+
   // src/modules/popup.ts
   function applyImportantStyles(el, styles) {
     if (!el) return;
@@ -3550,36 +3569,28 @@ html {
     btnGroup.style.borderRadius = "6px";
     btnGroup.style.background = "rgba(128, 128, 128, 0.1)";
 
-    const btnTranslate = event.doc.createElement("button");
-    btnTranslate.className = "toolbar-button";
-    btnTranslate.append(createTranslateIcon(event.doc));
-    btnTranslate.title = "Translate (翻译)";
-    btnTranslate.style.border = "none";
-    btnTranslate.style.background = "transparent";
-    btnTranslate.style.padding = "4px 8px";
-    btnTranslate.style.cursor = "pointer";
-    btnTranslate.style.borderRadius = "4px";
-    btnTranslate.style.display = "inline-flex";
-    btnTranslate.style.alignItems = "center";
-    btnTranslate.style.justifyContent = "center";
-    btnTranslate.style.transition = "all 0.15s ease";
+    const createButton = (icon, title) => {
+      const button = event.doc.createElement("button");
+      button.className = "toolbar-button";
+      button.append(icon);
+      button.title = title;
+      button.style.border = "none";
+      button.style.background = "transparent";
+      button.style.padding = "4px 8px";
+      button.style.cursor = "pointer";
+      button.style.borderRadius = "4px";
+      button.style.display = "inline-flex";
+      button.style.alignItems = "center";
+      button.style.justifyContent = "center";
+      button.style.transition = "all 0.15s ease";
+      return button;
+    };
 
-    const btnSummary = event.doc.createElement("button");
-    btnSummary.className = "toolbar-button";
-    btnSummary.append(createSummaryIcon(event.doc));
-    btnSummary.title = "Summary (人话总结)";
-    btnSummary.style.border = "none";
-    btnSummary.style.background = "transparent";
-    btnSummary.style.padding = "4px 8px";
-    btnSummary.style.cursor = "pointer";
-    btnSummary.style.borderRadius = "4px";
-    btnSummary.style.display = "inline-flex";
-    btnSummary.style.alignItems = "center";
-    btnSummary.style.justifyContent = "center";
-    btnSummary.style.borderRadius = "4px";
-    btnSummary.style.transition = "all 0.15s ease";
+    const btnBing = createButton(createBoltIcon(event.doc), "Quick Translate · Bing (快速翻译)");
+    const btnLlm = createButton(createTranslateIcon(event.doc), "LLM Translate (LLM 翻译)");
+    const btnSummary = createButton(createSummaryIcon(event.doc), "Summary (人话总结)");
 
-    btnGroup.append(btnTranslate, btnSummary);
+    btnGroup.append(btnBing, btnLlm, btnSummary);
 
     const status = event.doc.createElement("div");
     status.style.fontSize = "11px";
@@ -3624,27 +3635,35 @@ html {
       event.doc.defaultView?.setTimeout(resize, 0);
     }
 
-    const currentTranslateEntry = getOrCreateEntry(text, "translate");
+    const currentTranslateEntry = getOrCreateEntry(text, "bing");
 
-    btnTranslate.addEventListener("click", (ev) => {
-      ev.preventDefault();
-      const entry = getOrCreateEntry(text, "translate");
+    const runMode = (mode) => {
+      const entry = getOrCreateEntry(text, mode);
       addon.data.popup.currentKey = entry.key;
       void translateOrSummarizeEntry(entry, true);
+    };
+
+    btnBing.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      runMode("bing");
+    });
+
+    btnLlm.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      runMode("llm");
     });
 
     btnSummary.addEventListener("click", (ev) => {
       ev.preventDefault();
-      const entry = getOrCreateEntry(text, "summary");
-      addon.data.popup.currentKey = entry.key;
-      void translateOrSummarizeEntry(entry, true);
+      runMode("summary");
     });
 
     addon.data.popup.currentKey = currentTranslateEntry.key;
     addon.data.popup.currentText = text;
     addon.data.popup.currentElements = {
       container,
-      btnTranslate,
+      btnBing,
+      btnLlm,
       btnSummary,
       status,
       output
@@ -3685,55 +3704,69 @@ html {
     if (!elements || addon.data.popup.currentKey !== entry.key) {
       return;
     }
-    const isSummary = entry.mode === "summary";
+    const mode = entry.mode || "bing";
+    const isSummary = mode === "summary";
+    const isBing = mode === "bing";
+    const modeLabel = isSummary ? "Summary" : isBing ? "Bing" : "LLM";
+    const buttons = {
+      bing: elements.btnBing,
+      llm: elements.btnLlm,
+      summary: elements.btnSummary
+    };
 
-    if (isSummary) {
-      elements.btnSummary.style.background = "rgba(255, 255, 255, 0.85)";
-      elements.btnSummary.style.boxShadow = "0 1px 3px rgba(0, 0, 0, 0.12)";
-      elements.btnSummary.style.opacity = "1.0";
-      elements.btnTranslate.style.background = "transparent";
-      elements.btnTranslate.style.boxShadow = "none";
-      elements.btnTranslate.style.opacity = "0.55";
-    } else {
-      elements.btnTranslate.style.background = "rgba(255, 255, 255, 0.85)";
-      elements.btnTranslate.style.boxShadow = "0 1px 3px rgba(0, 0, 0, 0.12)";
-      elements.btnTranslate.style.opacity = "1.0";
-      elements.btnSummary.style.background = "transparent";
-      elements.btnSummary.style.boxShadow = "none";
-      elements.btnSummary.style.opacity = "0.55";
+    for (const [key, button] of Object.entries(buttons)) {
+      const active = key === mode;
+      button.style.background = active ? "rgba(255, 255, 255, 0.85)" : "transparent";
+      button.style.boxShadow = active ? "0 1px 3px rgba(0, 0, 0, 0.12)" : "none";
+      button.style.opacity = active ? "1.0" : "0.55";
     }
+
+    const baseTitles = {
+      bing: "Quick Translate · Bing (快速翻译)",
+      llm: "LLM Translate (LLM 翻译)",
+      summary: "Summary (人话总结)"
+    };
+    const retryTitles = {
+      bing: "Retranslate · Bing (重新快速翻译)",
+      llm: "Retranslate · LLM (重新用 LLM 翻译)",
+      summary: "Resummarize (重新总结)"
+    };
+
+    const setDisabled = (disabled) => {
+      for (const button of Object.values(buttons)) {
+        button.disabled = disabled;
+      }
+    };
 
     switch (entry.status) {
       case "loading":
-        elements.btnTranslate.disabled = true;
-        elements.btnSummary.disabled = true;
-        elements.status.textContent = isSummary ? "Summarizing..." : "Translating...";
+        setDisabled(true);
+        elements.status.textContent = isSummary ? "Summarizing..." : isBing ? "Translating... · Bing" : "Translating... · LLM";
         elements.status.style.color = "var(--fill-secondary)";
         break;
       case "success":
-        elements.btnTranslate.disabled = false;
-        elements.btnSummary.disabled = false;
-        elements.btnTranslate.title = isSummary ? "Switch to Translate (翻译)" : "Retranslate (重新翻译)";
-        elements.btnSummary.title = isSummary ? "Resummarize (重新总结)" : "Switch to Summary (人话总结)";
+        setDisabled(false);
+        buttons.bing.title = retryTitles.bing;
+        buttons.llm.title = retryTitles.llm;
+        buttons.summary.title = retryTitles.summary;
         if (entry.isCacheHit) {
-          elements.status.textContent = "⚡ Cache Hit";
+          elements.status.textContent = `⚡ Cache Hit · ${modeLabel}`;
           elements.status.style.color = "#10b981";
         } else {
-          elements.status.textContent = isSummary ? "Summary Done" : "Translate Done";
+          elements.status.textContent = isSummary ? "Summary Done" : `${modeLabel} Translate Done`;
           elements.status.style.color = "var(--fill-secondary)";
         }
         break;
       case "error":
-        elements.btnTranslate.disabled = false;
-        elements.btnSummary.disabled = false;
+        setDisabled(false);
         elements.status.textContent = entry.error;
         elements.status.style.color = "var(--color-error)";
         break;
       default:
-        elements.btnTranslate.disabled = false;
-        elements.btnSummary.disabled = false;
-        elements.btnTranslate.title = "Translate (翻译)";
-        elements.btnSummary.title = "Summary (人话总结)";
+        setDisabled(false);
+        buttons.bing.title = baseTitles.bing;
+        buttons.llm.title = baseTitles.llm;
+        buttons.summary.title = baseTitles.summary;
         elements.status.textContent = "";
         elements.status.style.color = "var(--fill-secondary)";
         break;
@@ -3790,7 +3823,6 @@ html {
       enableCache: Boolean(getPref("enableCache")),
       maxCacheEntries: Number(getPref("maxCacheEntries") || 2000),
       extraBodyJson: String(getPref("extraBodyJson") || "").trim(),
-      translateEngine: getPref("translateEngine") === "bing" ? "bing" : "llm",
       bingSourceLang: String(getPref("bingSourceLang") || "en").trim() || "en",
       bingTargetLang: String(getPref("bingTargetLang") || "zh-Hans").trim() || "zh-Hans"
     };
@@ -3908,22 +3940,21 @@ html {
       addon.data.translations.delete(oldestKey);
     }
   }
-  function getCacheKey(text, mode = "translate", settings = getSettings()) {
-    const prompt = mode === "summary" ? settings.summaryPromptTemplate : settings.promptTemplate;
-    const engine = mode === "summary" ? "llm" : settings.translateEngine;
+  function getCacheKey(text, mode = "bing", settings = getSettings()) {
+    const isBing = mode === "bing";
+    const prompt = mode === "summary" ? settings.summaryPromptTemplate : isBing ? "" : settings.promptTemplate;
     return JSON.stringify({
       mode,
-      engine,
-      bingSourceLang: engine === "bing" ? settings.bingSourceLang : "",
-      bingTargetLang: engine === "bing" ? settings.bingTargetLang : "",
-      endpoint: settings.endpoint,
-      model: settings.model,
-      targetLanguage: settings.targetLanguage,
+      bingSourceLang: isBing ? settings.bingSourceLang : "",
+      bingTargetLang: isBing ? settings.bingTargetLang : "",
+      endpoint: isBing ? "" : settings.endpoint,
+      model: isBing ? "" : settings.model,
+      targetLanguage: isBing ? "" : settings.targetLanguage,
       prompt,
       text
     });
   }
-  function getOrCreateEntry(text, mode = "translate") {
+  function getOrCreateEntry(text, mode = "bing") {
     const normalizedText = text.trim();
     const settings = getSettings();
     const key = getCacheKey(normalizedText, mode, settings);
@@ -4088,7 +4119,7 @@ ${buffer}`.trim();
       return;
     }
     const settings = getSettings();
-    const useBing = (entry.mode || "translate") === "translate" && settings.translateEngine === "bing";
+    const useBing = (entry.mode || "bing") === "bing";
     if (!force && entry.status === "success" && entry.result.trim()) {
       entry.isCacheHit = true;
       refreshActivePopup();
@@ -4156,7 +4187,7 @@ ${buffer}`.trim();
       messages: [
         {
           role: "user",
-          content: buildPrompt(entry.text, entry.mode || "translate", settings)
+          content: buildPrompt(entry.text, entry.mode === "summary" ? "summary" : "translate", settings)
         }
       ],
       stream: settings.stream,

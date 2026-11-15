@@ -1,5 +1,4 @@
 pref("extensions.zotero.LLMSelectionTranslate.enableAuto", true);
-pref("extensions.zotero.LLMSelectionTranslate.translateEngine", "llm");
 pref("extensions.zotero.LLMSelectionTranslate.bingSourceLang", "en");
 pref("extensions.zotero.LLMSelectionTranslate.bingTargetLang", "zh-Hans");
 pref("extensions.zotero.LLMSelectionTranslate.stream", true);

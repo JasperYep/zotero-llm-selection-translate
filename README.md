@@ -14,12 +14,12 @@
 
 ## Features
 
+- Three buttons in the reader popup: quick Bing translate, LLM translate, and LLM Summary.
 - Translate selected academic text through an OpenAI-compatible API.
-- Explain difficult passages with a plain-text Summary mode.
 - Cache successful translations and summaries locally.
 - Stream responses when supported by the endpoint.
 - Press the configurable shortcut (default `A`) to toggle Zotero's native Highlight tool.
-- Translate with **Bing** instead of an LLM: free, no API key, ~0.3s per request.
+- Quick translate with **Bing**: free, no API key, ~0.3s per request, chosen per click instead of in settings.
 
 ## Install
 
@@ -35,7 +35,8 @@ Open **Zotero Preferences → LLM Selection Translate** and set:
 - API endpoint
 - API token
 - Model
-- Target language
+- Target language (used by the LLM)
+- Bing source / target language codes (e.g. `en`, `zh-Hans`)
 - Highlight shortcut key (one letter; default `A`)
 - Translation and Summary prompts
 
