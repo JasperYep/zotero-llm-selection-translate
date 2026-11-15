@@ -1,5 +1,41 @@
 <vbox id="zotero-prefpane-llmselectiontranslate" xmlns:html="http://www.w3.org/1999/xhtml" flex="1">
   <groupbox>
+    <label value="Translate Engine" />
+    <description>
+      Bing is Microsoft Edge's free machine translation: no API key, ~0.3s.
+      It only applies to Translate; Summary always uses the LLM below.
+    </description>
+    <hbox align="center">
+      <menulist
+        id="llmselectiontranslate-translateEngine"
+        native="true"
+        preference="extensions.zotero.LLMSelectionTranslate.translateEngine"
+      >
+        <menupopup>
+          <menuitem label="LLM (OpenAI-compatible API)" value="llm" />
+          <menuitem label="Bing (free, fast)" value="bing" />
+        </menupopup>
+      </menulist>
+    </hbox>
+    <hbox align="center">
+      <label value="Bing Source Language" />
+      <html:input
+        id="llmselectiontranslate-bingSourceLang"
+        type="text"
+        preference="extensions.zotero.LLMSelectionTranslate.bingSourceLang"
+        style="width: 120px"
+      />
+      <label value="Bing Target Language" />
+      <html:input
+        id="llmselectiontranslate-bingTargetLang"
+        type="text"
+        preference="extensions.zotero.LLMSelectionTranslate.bingTargetLang"
+        style="width: 120px"
+      />
+      <description value="BCP-47 codes, e.g. en / zh-Hans / ja. auto is not supported." />
+    </hbox>
+  </groupbox>
+  <groupbox>
     <label value="Behavior &amp; Cache" />
     <checkbox
       id="llmselectiontranslate-enableAuto"
@@ -42,7 +78,7 @@
   </groupbox>
 
   <groupbox>
-    <label value="LLM API" />
+    <label value="LLM API (used when Translate Engine = LLM)" />
     <description>
       Uses an OpenAI-compatible Chat Completions endpoint.
     </description>

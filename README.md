@@ -19,6 +19,7 @@
 - Cache successful translations and summaries locally.
 - Stream responses when supported by the endpoint.
 - Press the configurable shortcut (default `A`) to toggle Zotero's native Highlight tool.
+- Translate with **Bing** instead of an LLM: free, no API key, ~0.3s per request.
 
 ## Install
 

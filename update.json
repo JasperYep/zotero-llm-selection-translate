@@ -3,7 +3,7 @@
     "llm-selection-translate@jasper.local": {
       "updates": [
         {
-          "version": "0.5.4",
+          "version": "0.6.0",
           "update_link": "https://github.com/JasperYep/zotero-llm-selection-translate/releases/latest/download/llm-selection-translate-for-zotero.xpi"
         }
       ]

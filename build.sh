@@ -17,10 +17,26 @@ cp "$repo_dir/chrome/content/preferences.xhtml" "$stage_dir/chrome/content/"
 cp "$repo_dir/chrome/content/scripts/llmselectiontranslate.js" "$stage_dir/chrome/content/scripts/"
 
 rm -f "$out_file"
-(
-  cd "$stage_dir"
-  zip -qr "$out_file" bootstrap.js chrome icon.svg manifest.json prefs.js
-)
+if command -v zip >/dev/null 2>&1; then
+  (
+    cd "$stage_dir"
+    zip -qr "$out_file" bootstrap.js chrome icon.svg manifest.json prefs.js
+  )
+else
+  python3 - "$stage_dir" "$out_file" <<'PY'
+import os
+import sys
+import zipfile
+
+stage_dir, out_file = sys.argv[1], sys.argv[2]
+entries = ["bootstrap.js", "chrome/content/preferences.xhtml",
+           "chrome/content/scripts/llmselectiontranslate.js",
+           "icon.svg", "manifest.json", "prefs.js"]
+with zipfile.ZipFile(out_file, "w", zipfile.ZIP_DEFLATED) as zf:
+    for entry in entries:
+        zf.write(os.path.join(stage_dir, entry), entry)
+PY
+fi
 
 echo "Built $out_file"
 unzip -l "$out_file"

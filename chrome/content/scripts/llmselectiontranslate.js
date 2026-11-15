@@ -3743,6 +3743,40 @@ html {
     elements.output.textContent = cleanResult || (entry.status === "loading" ? (isSummary ? "Generating plain summary..." : "Translating...") : entry.text);
   }
 
+  // src/modules/bing.ts
+  var BING_ENDPOINT = "https://edge.microsoft.com/translate/translatetext";
+  var BING_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.42";
+  async function requestBingTranslation(text, settings) {
+    const url = `${BING_ENDPOINT}?from=${encodeURIComponent(settings.bingSourceLang)}&to=${encodeURIComponent(settings.bingTargetLang)}&isEnterpriseClient=false`;
+    let xhr;
+    try {
+      xhr = await Zotero.HTTP.request("POST", url, {
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": BING_USER_AGENT
+        },
+        body: JSON.stringify([text]),
+        responseType: "json"
+      });
+    } catch (error) {
+      const status = error?.status;
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(status ? `Bing request failed (${status}): ${message}` : `Bing request failed: ${message}`);
+    }
+    const payload = xhr?.response ?? (() => {
+      try {
+        return JSON.parse(xhr?.responseText || "");
+      } catch (_error) {
+        return null;
+      }
+    })();
+    const result = payload?.[0]?.translations?.[0]?.text;
+    if (typeof result !== "string" || !result.trim()) {
+      throw new Error(`Bing returned no translation (HTTP ${xhr?.status})`);
+    }
+    return result;
+  }
+
   // src/modules/service.ts
   function getSettings() {
     return {
@@ -3755,7 +3789,10 @@ html {
       stream: Boolean(getPref("stream")),
       enableCache: Boolean(getPref("enableCache")),
       maxCacheEntries: Number(getPref("maxCacheEntries") || 2000),
-      extraBodyJson: String(getPref("extraBodyJson") || "").trim()
+      extraBodyJson: String(getPref("extraBodyJson") || "").trim(),
+      translateEngine: getPref("translateEngine") === "bing" ? "bing" : "llm",
+      bingSourceLang: String(getPref("bingSourceLang") || "en").trim() || "en",
+      bingTargetLang: String(getPref("bingTargetLang") || "zh-Hans").trim() || "zh-Hans"
     };
   }
   function getCacheFilePath() {
@@ -3873,8 +3910,12 @@ html {
   }
   function getCacheKey(text, mode = "translate", settings = getSettings()) {
     const prompt = mode === "summary" ? settings.summaryPromptTemplate : settings.promptTemplate;
+    const engine = mode === "summary" ? "llm" : settings.translateEngine;
     return JSON.stringify({
       mode,
+      engine,
+      bingSourceLang: engine === "bing" ? settings.bingSourceLang : "",
+      bingTargetLang: engine === "bing" ? settings.bingTargetLang : "",
       endpoint: settings.endpoint,
       model: settings.model,
       targetLanguage: settings.targetLanguage,
@@ -4047,6 +4088,42 @@ ${buffer}`.trim();
       return;
     }
     const settings = getSettings();
+    const useBing = (entry.mode || "translate") === "translate" && settings.translateEngine === "bing";
+    if (!force && entry.status === "success" && entry.result.trim()) {
+      entry.isCacheHit = true;
+      refreshActivePopup();
+      return;
+    }
+    const requestId = createRequestId();
+    entry.requestId = requestId;
+    entry.status = "loading";
+    entry.error = "";
+    entry.result = "";
+    entry.isCacheHit = false;
+    entry.updatedAt = Date.now();
+    refreshActivePopup();
+    if (useBing) {
+      try {
+        const result = await requestBingTranslation(entry.text, settings);
+        if (entry.requestId !== requestId) {
+          return;
+        }
+        entry.result = result;
+        entry.status = "success";
+        entry.updatedAt = Date.now();
+        scheduleSaveCacheToDisk();
+        refreshActivePopup();
+      } catch (error) {
+        if (entry.requestId !== requestId) {
+          return;
+        }
+        entry.status = "error";
+        entry.error = error instanceof Error ? error.message : "Bing translation failed";
+        entry.updatedAt = Date.now();
+        refreshActivePopup();
+      }
+      return;
+    }
     if (!settings.endpoint) {
       entry.status = "error";
       entry.error = "Missing API Endpoint";
@@ -4065,19 +4142,6 @@ ${buffer}`.trim();
       refreshActivePopup();
       return;
     }
-    if (!force && entry.status === "success" && entry.result.trim()) {
-      entry.isCacheHit = true;
-      refreshActivePopup();
-      return;
-    }
-    const requestId = createRequestId();
-    entry.requestId = requestId;
-    entry.status = "loading";
-    entry.error = "";
-    entry.result = "";
-    entry.isCacheHit = false;
-    entry.updatedAt = Date.now();
-    refreshActivePopup();
     let extraBody = {};
     try {
       extraBody = parseExtraBodyJson(settings.extraBodyJson);

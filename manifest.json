@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "LLM Selection Translate for Zotero",
-  "version": "0.5.4",
+  "version": "0.6.0",
   "description": "Translate selected text in the Zotero reader via a custom OpenAI-compatible LLM API.",
   "author": "jasper+pi",
   "icons": {
@@ -12,7 +12,7 @@
     "zotero": {
       "id": "llm-selection-translate@jasper.local",
       "strict_min_version": "7.9.9",
-      "strict_max_version": "9.9.9",
+      "strict_max_version": "10.*",
       "update_url": "https://github.com/JasperYep/zotero-llm-selection-translate/releases/latest/download/update.json"
     }
   }
