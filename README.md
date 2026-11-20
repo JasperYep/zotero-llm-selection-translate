@@ -15,6 +15,7 @@
 ## Features
 
 - Three buttons in the reader popup: quick Bing translate, LLM translate, and LLM Summary.
+- Copy the current translation or summary to the clipboard from the top-right copy button.
 - Translate selected academic text through an OpenAI-compatible API.
 - Cache successful translations and summaries locally.
 - Stream responses when supported by the endpoint.

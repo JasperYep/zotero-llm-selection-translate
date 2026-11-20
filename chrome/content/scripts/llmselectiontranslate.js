@@ -3454,6 +3454,50 @@ html {
     return svg;
   }
 
+  function createCopyIcon(doc) {
+    const svg = doc.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", "14");
+    svg.setAttribute("height", "14");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "1.8");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    svg.style.display = "block";
+
+    const rect = doc.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("x", "9");
+    rect.setAttribute("y", "9");
+    rect.setAttribute("width", "12");
+    rect.setAttribute("height", "12");
+    rect.setAttribute("rx", "2");
+    const path = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1");
+
+    svg.append(rect, path);
+    return svg;
+  }
+
+  function createCheckIcon(doc) {
+    const svg = doc.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", "14");
+    svg.setAttribute("height", "14");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "1.8");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    svg.style.display = "block";
+
+    const path = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M20 6 9 17l-5-5");
+
+    svg.append(path);
+    return svg;
+  }
+
   // src/modules/popup.ts
   function applyImportantStyles(el, styles) {
     if (!el) return;
@@ -3538,6 +3582,24 @@ html {
     return popup;
   }
 
+  async function copyToClipboard(doc, text) {
+    try {
+      const clipboard = doc?.defaultView?.navigator?.clipboard;
+      if (clipboard?.writeText) {
+        await clipboard.writeText(text);
+        return true;
+      }
+    } catch (_error) {}
+    try {
+      const helper = Components.classes["@mozilla.org/widget/clipboardhelper;1"].getService(Components.interfaces.nsIClipboardHelper);
+      helper.copyString(text, doc);
+      return true;
+    } catch (error) {
+      Zotero.debug(`LLMSelectionTranslate: copy failed ${error}`);
+      return false;
+    }
+  }
+
   function buildPopup(event, text) {
     const previousPanels = event.doc.querySelectorAll(".llmselectiontranslate-panel");
     previousPanels.forEach((node) => node.remove());
@@ -3592,6 +3654,16 @@ html {
 
     btnGroup.append(btnBing, btnLlm, btnSummary);
 
+    const btnCopy = createButton(createCopyIcon(event.doc), "Copy translation (复制译文)");
+    btnCopy.disabled = true;
+    btnCopy.style.opacity = "0.35";
+    btnCopy.style.cursor = "default";
+    let copyResetTimer = null;
+    const setCopyFeedback = (copied) => {
+      btnCopy.replaceChildren(copied ? createCheckIcon(event.doc) : createCopyIcon(event.doc));
+      btnCopy.title = copied ? "Copied (已复制)" : "Copy translation (复制译文)";
+    };
+
     const status = event.doc.createElement("div");
     status.style.fontSize = "11px";
     status.style.fontWeight = "500";
@@ -3624,7 +3696,7 @@ html {
     output.style.boxSizing = "border-box";
     output.addEventListener("pointerup", (ev) => ev.stopPropagation());
     output.addEventListener("mousedown", (ev) => ev.stopPropagation());
-    toolbar.append(btnGroup, status);
+    toolbar.append(btnGroup, status, btnCopy);
     container.append(toolbar, output);
     event.append(container);
 
@@ -3658,6 +3730,26 @@ html {
       runMode("summary");
     });
 
+    btnCopy.addEventListener("click", async (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const entry = addon.data.translations.get(addon.data.popup.currentKey);
+      const text = entry ? getDisplayText(entry).trim() : "";
+      if (!text) {
+        return;
+      }
+      const ok = await copyToClipboard(event.doc, text);
+      if (!ok) {
+        btnCopy.title = "Copy failed (复制失败)";
+        return;
+      }
+      setCopyFeedback(true);
+      if (copyResetTimer) {
+        event.doc.defaultView?.clearTimeout(copyResetTimer);
+      }
+      copyResetTimer = event.doc.defaultView?.setTimeout(() => setCopyFeedback(false), 1500);
+    });
+
     addon.data.popup.currentKey = currentTranslateEntry.key;
     addon.data.popup.currentText = text;
     addon.data.popup.currentElements = {
@@ -3666,7 +3758,9 @@ html {
       btnLlm,
       btnSummary,
       status,
-      output
+      output,
+      btnCopy,
+      setCopyFeedback
     };
     renderEntry(currentTranslateEntry);
 
@@ -3698,6 +3792,11 @@ html {
       .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
       .replace(/\n{3,}/g, "\n\n")
       .trim();
+  }
+
+  function getDisplayText(entry) {
+    const raw = entry?.result || "";
+    return (entry?.mode || "bing") === "summary" ? stripMarkdown(raw) : raw;
   }
 
   function renderEntry(entry, elements = addon.data.popup.currentElements) {
@@ -3771,9 +3870,15 @@ html {
         elements.status.style.color = "var(--fill-secondary)";
         break;
     }
-    const rawResult = entry.result || "";
-    const cleanResult = isSummary ? stripMarkdown(rawResult) : rawResult;
+    const cleanResult = getDisplayText(entry);
     elements.output.textContent = cleanResult || (entry.status === "loading" ? (isSummary ? "Generating plain summary..." : "Translating...") : entry.text);
+    const copyable = entry.status === "success" && Boolean(cleanResult.trim());
+    if (elements.btnCopy) {
+      elements.btnCopy.disabled = !copyable;
+      elements.btnCopy.style.opacity = copyable ? "1" : "0.35";
+      elements.btnCopy.style.cursor = copyable ? "pointer" : "default";
+    }
+    elements.setCopyFeedback?.(false);
   }
 
   // src/modules/bing.ts
